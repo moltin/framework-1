@@ -63,8 +63,6 @@ class DatabaseManager implements ConnectionResolverInterface {
 		{
 			$connection = $this->makeConnection($name);
 
-			$this->setPdoForType($connection, $type);
-
 			$this->connections[$name] = $this->prepare($connection);
 		}
 
@@ -138,11 +136,13 @@ class DatabaseManager implements ConnectionResolverInterface {
 	 */
 	protected function refreshPdoConnections($name)
 	{
+		/*
 		$fresh = $this->makeConnection($name);
 
 		return $this->connections[$name]
                                 ->setPdo($fresh->getPdo())
                                 ->setReadPdo($fresh->getReadPdo());
+        */
 	}
 
 	/**

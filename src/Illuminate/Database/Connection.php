@@ -4,6 +4,7 @@ use PDO;
 use Closure;
 use DateTime;
 use Illuminate\Events\Dispatcher;
+use Illuminate\Database\Connectors\ConnectionFactory;
 use Illuminate\Database\Query\Processors\Processor;
 use Doctrine\DBAL\Connection as DoctrineConnection;
 
@@ -129,6 +130,12 @@ class Connection implements ConnectionInterface {
 	protected $config = array();
 
 	/**
+	 * The connection factory
+	 *
+	 * @var \Illuminate\Database\Connectors\ConnectionFactory
+	 */
+
+	/**
 	 * Create a new database connection instance.
 	 *
 	 * @param  \PDO     $pdo
@@ -137,9 +144,9 @@ class Connection implements ConnectionInterface {
 	 * @param  array    $config
 	 * @return void
 	 */
-	public function __construct(PDO $pdo, $database = '', $tablePrefix = '', array $config = array())
+	public function __construct($database = '', $tablePrefix = '', array $config = array(), ConnectionFactory $connectionFactory)
 	{
-		$this->pdo = $pdo;
+		$this->connectionFactory = $connectionFactory;
 
 		// First we will setup the default properties. We keep track of the DB
 		// name we are connected to since it is needed when some reflective
@@ -802,17 +809,21 @@ class Connection implements ConnectionInterface {
 	}
 
 	/**
-	 * Get the current PDO connection.
+	 * Get the default PDO collection (read/write)
 	 *
 	 * @return \PDO
 	 */
 	public function getPdo()
 	{
+		if($this->pdo) return $this->pdo;
+
+		$this->setPdo($this->connectionFactory->makeWriteConnection($this->config));
+
 		return $this->pdo;
 	}
 
 	/**
-	 * Get the current PDO connection used for reading.
+	 * Get the PDO connection specific for reading
 	 *
 	 * @return \PDO
 	 */
@@ -820,7 +831,11 @@ class Connection implements ConnectionInterface {
 	{
 		if ($this->transactions >= 1) return $this->getPdo();
 
-		return $this->readPdo ?: $this->pdo;
+		if($this->readPdo) return $this->readPdo;
+
+		$this->setReadPdo($this->connectionFactory->makeReadConnection($this->config));
+
+		return $this->readPdo;
 	}
 
 	/**

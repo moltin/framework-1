@@ -38,12 +38,18 @@ class ConnectionFactory {
 	{
 		$config = $this->parseConfig($config, $name);
 
-		if (isset($config['read']))
-		{
-			return $this->createReadWriteConnection($config);
-		}
+		return $this->createBlankConnection($config);
+	}
 
-		return $this->createSingleConnection($config);
+	/**
+	 * Create a blank connection
+	 * 
+	 * @param array config
+	 * @return \Illuminate\Database\Connection
+	 */
+	protected function createBlankConnection(array $config)
+	{
+		return $this->createConnection($config['driver'], $config['database'], $config['prefix'], $config, $this);
 	}
 
 	/**
@@ -194,7 +200,6 @@ class ConnectionFactory {
 	 * Create a new connection instance.
 	 *
 	 * @param  string   $driver
-	 * @param  \PDO     $connection
 	 * @param  string   $database
 	 * @param  string   $prefix
 	 * @param  array    $config
@@ -202,7 +207,7 @@ class ConnectionFactory {
 	 *
 	 * @throws \InvalidArgumentException
 	 */
-	protected function createConnection($driver, PDO $connection, $database, $prefix = '', array $config = array())
+	protected function createConnection($driver, $database, $prefix = '', array $config = array())
 	{
 		if ($this->container->bound($key = "db.connection.{$driver}"))
 		{
@@ -212,16 +217,16 @@ class ConnectionFactory {
 		switch ($driver)
 		{
 			case 'mysql':
-				return new MySqlConnection($connection, $database, $prefix, $config);
+				return new MySqlConnection($connection, $database, $prefix, $config, $this);
 
 			case 'pgsql':
-				return new PostgresConnection($connection, $database, $prefix, $config);
+				return new PostgresConnection($connection, $database, $prefix, $config, $this);
 
 			case 'sqlite':
-				return new SQLiteConnection($connection, $database, $prefix, $config);
+				return new SQLiteConnection($connection, $database, $prefix, $config, $this);
 
 			case 'sqlsrv':
-				return new SqlServerConnection($connection, $database, $prefix, $config);
+				return new SqlServerConnection($connection, $database, $prefix, $config, $this);
 		}
 
 		throw new \InvalidArgumentException("Unsupported driver [$driver]");
