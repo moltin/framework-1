@@ -576,7 +576,7 @@ class Connection implements ConnectionInterface {
 	 */
 	protected function run($query, $bindings, Closure $callback)
 	{
-		$this->reconnectIfMissingConnection();
+		//$this->reconnectIfMissingConnection();
 
 		$start = microtime(true);
 
