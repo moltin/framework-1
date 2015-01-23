@@ -817,7 +817,7 @@ class Connection implements ConnectionInterface {
 	{
 		if($this->pdo) return $this->pdo;
 
-		$this->setPdo($this->connectionFactory->makeWriteConnection($this->config));
+		$this->setPdo($this->connectionFactory->createWriteConnection($this->config));
 
 		return $this->pdo;
 	}
@@ -833,7 +833,7 @@ class Connection implements ConnectionInterface {
 
 		if($this->readPdo) return $this->readPdo;
 
-		$this->setReadPdo($this->connectionFactory->makeReadConnection($this->config));
+		$this->setReadPdo($this->connectionFactory->createReadConnection($this->config));
 
 		return $this->readPdo;
 	}

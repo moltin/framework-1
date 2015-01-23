@@ -52,18 +52,6 @@ class ConnectionFactory {
 		return $this->createConnection($config['driver'], $config['database'], $config['prefix'], $config, $this);
 	}
 
-	/**
-	 * Create a single database connection instance.
-	 *
-	 * @param  array  $config
-	 * @return \Illuminate\Database\Connection
-	 */
-	protected function createSingleConnection(array $config)
-	{
-		$pdo = $this->createConnector($config)->connect($config);
-
-		return $this->createConnection($config['driver'], $pdo, $config['database'], $config['prefix'], $config);
-	}
 
 	/**
 	 * Create a single database connection instance.
@@ -71,20 +59,7 @@ class ConnectionFactory {
 	 * @param  array  $config
 	 * @return \Illuminate\Database\Connection
 	 */
-	protected function createReadWriteConnection(array $config)
-	{
-		$connection = $this->createSingleConnection($this->getWriteConfig($config));
-
-		return $connection->setReadPdo($this->createReadPdo($config));
-	}
-
-	/**
-	 * Create a new PDO instance for reading.
-	 *
-	 * @param  array  $config
-	 * @return \PDO
-	 */
-	protected function createReadPdo(array $config)
+	public function createReadConnection(array $config)
 	{
 		$readConfig = $this->getReadConfig($config);
 
@@ -92,7 +67,20 @@ class ConnectionFactory {
 	}
 
 	/**
-	 * Get the read configuration for a read / write connection.
+	 * Create a single database connection instance.
+	 *
+	 * @param  array  $config
+	 * @return \Illuminate\Database\Connection
+	 */
+	public function createWriteConnection(array $config)
+	{
+		$writeConfig = $this->getWriteConfig($config);
+
+		return $this->createConnector($writeConfig)->connect($writeConfig);
+	}
+
+	/**
+	 * Get the read configuration for a read connection.
 	 *
 	 * @param  array  $config
 	 * @return array
@@ -105,7 +93,7 @@ class ConnectionFactory {
 	}
 
 	/**
-	 * Get the read configuration for a read / write connection.
+	 * Get the read configuration for a write connection.
 	 *
 	 * @param  array  $config
 	 * @return array
@@ -126,12 +114,14 @@ class ConnectionFactory {
 	 */
 	protected function getReadWriteConfig(array $config, $type)
 	{
+		// This is for multiple databases of a single type
 		if (isset($config[$type][0]))
 		{
 			return $config[$type][array_rand($config[$type])];
 		}
 
-		return $config[$type];
+		// Return the specific config type, or fall back to the basic config structure
+		return (isset($config[$type])) ? $config[$type] : $config;
 	}
 
 	/**
@@ -217,16 +207,16 @@ class ConnectionFactory {
 		switch ($driver)
 		{
 			case 'mysql':
-				return new MySqlConnection($connection, $database, $prefix, $config, $this);
+				return new MySqlConnection($database, $prefix, $config, $this);
 
 			case 'pgsql':
-				return new PostgresConnection($connection, $database, $prefix, $config, $this);
+				return new PostgresConnection($database, $prefix, $config, $this);
 
 			case 'sqlite':
-				return new SQLiteConnection($connection, $database, $prefix, $config, $this);
+				return new SQLiteConnection($database, $prefix, $config, $this);
 
 			case 'sqlsrv':
-				return new SqlServerConnection($connection, $database, $prefix, $config, $this);
+				return new SqlServerConnection($database, $prefix, $config, $this);
 		}
 
 		throw new \InvalidArgumentException("Unsupported driver [$driver]");
